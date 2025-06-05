@@ -153,10 +153,8 @@ export default function SoccerGame(){
 
 
     return(
-     <div className="py-8">
+     <div className="pb-4">
       <div className="container-futbol">
-
-
         {/* Esto es la opción principla que se va a mostrar por que esl estado es falso, que esto indica que toda via no se dió comienzo al juego. */}
         {!gameStarted ? (
             <div className="max-w-3xl mx-auto bg-[#081828] border border-gray-800 rounded-md p-4 md:p-8">
@@ -189,45 +187,14 @@ export default function SoccerGame(){
             </div>
 
         ) : (
-            <div className="max-w-3xl md:max-w-4xl mx-auto p-4 md:p-8">
+            <div className="max-w-2xl md:max-w-4xl mx-auto p-4 md:p-8">
                {/* <h1 className="gameTitlee">
                 <span className="spanFutbol">FUTBOL</span>
                 <span className="span11">11</span> LINK
               </h1> */}
-             <div className="mb-8">
-                {/* <p className="text-center text-gray-300 mb-4">
-                Guess the player who has played with all these teammates:
-                </p> */}
-
-{/* 
-             <div  className="flex flex-col justify-center items-center py-4">
-
-             <div className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] ${
-                gameResult === "correct" ? '[transform:rotateY(180deg)]' : '' }`}>
-
-               <div className="aspect-square overflow-hidden rounded-md bg-[#0F344B] border-[#0DD0F7] border mb-2 w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 [backface-visibility:hidden]">
-                <img
-                    src={mockGameData?.mysteryPlayer.imageUrl}
-                    //alt={lastName}
-                className="h-full w-full object-cover" />  
-                </div>
-
-                <div className="absolute w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                  <div className="aspect-square overflow-hidden rounded-md bg-[#0F344B] border-[#0DD0F7] border">
-                   <img
-                    src={mockGameData?.mysteryPlayer.imageUrl}
-                    alt={mockGameData?.mysteryPlayer.name}
-                    className="h-full w-full object-cover"/>
-                  </div>
-                  <h3 className="text-white text-center text-base font-medium pt-1">{mockGameData?.mysteryPlayer.name}</h3> 
-                </div>
-
-                <h3 className="text-white text-center text-base font-medium">I played with these 5 players. Who am I?</h3>
-                </div>
-
-              </div> */}
-      <div className="flex flex-col justify-center items-center py-4 mb-8">
-          <div className="w-28 h-28 md:w-32 md:h-32 [perspective:600px]">
+    <div className="mb-8">
+      <div className="flex flex-col justify-center items-center py-4 ">
+          <div className="w-20 h-20 md:w-[7rem] md:h-[7rem] lg:w-32 lg:h-32 [perspective:600px]">
               <div className={`relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d] ${
                   isFlipped ? '[transform:rotateY(180deg)]' : ''
                 }`}
@@ -247,15 +214,23 @@ export default function SoccerGame(){
                     alt={mockGameData?.mysteryPlayer.name}
                     className="h-full w-full object-cover" />
                   </div>
-                  <h3 className="text-white text-center text-base pt-4">{lastNameMistery}</h3> 
                   </div>
+
                   {/* </div> */}
               </div>
            </div>
+              <h3 className="text-white text-center font-normal text-base mt-2">
+             {
+             gameResult === "correct"
+             ? (`Adivinaste. Soy ${lastNameMistery}`)
+             : gameEnded && gameResult === "incorrect"
+              ? (`Perdiste. Soy ${lastNameMistery}`)
+              :  "Jugué con estos cinco jugadores. ¿Quién soy yo?" 
+              }
+              </h3>  
        </div>
 
-
-    <div className="flex flex-wrap justify-center gap-x-6 mb-6">
+    <div className="flex flex-wrap justify-center gap-x-6 mb-5">
 
                 {/* //La destructuración se va hacer siempre apuntando a la varaible que guarda lo jugadores segun la cantidad de opciónes que permitimos que se muestre por los intentos ya hechos */}
                 {visibleTeammates?.map((player, index) =>{ 
@@ -276,13 +251,13 @@ export default function SoccerGame(){
                 return(
                     <div key={player.id} className="flex flex-col justify-center items-center py-4">
                      {/* ////////////////////// */}
-                     <div className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 [perspective:600px]">
+                     <div className="w-[70px] h-[70px] md:w-24 md:h-24 lg:w-28 lg:h-28 [perspective:600px]">
                         <div className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] ${
                           flippedCards.includes(index) ? '[transform:rotateY(180deg)]' : ''
                         }`}>
 
                           {/* Frente - Número */}
-                          <div className="absolute w-full h-full [backface-visibility:hidden] flex items-center justify-center border-[#0DD0F7] border rounded-md">
+                          <div className="absolute w-full h-full [backface-visibility:hidden]  flex items-center justify-center border-[#0DD0F7] border rounded-md">
                             <span className="text-5xl font-bold text-[#0DD0F7]">{index + 1}</span>
                           </div>
 
@@ -296,7 +271,7 @@ export default function SoccerGame(){
                                 className="h-full w-full object-cover"
                               />
                             </div>
-                           <h3 className="text-white text-center text-base pt-1">{lastName}</h3> 
+                           <h3 className="text-white text-center font-normal text-base pt-1">{lastName}</h3> 
                           </div>
 
 
@@ -377,6 +352,9 @@ export default function SoccerGame(){
                     type="text" 
                     value={guessInput}
                     onChange={(e) => handleChange(e)}
+                    onFocus={(e) => {
+                    e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }}
                     onKeyDown={(e) =>{
                       if(e.key === "Enter") handleGuess();
                     }}

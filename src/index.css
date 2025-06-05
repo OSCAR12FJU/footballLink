@@ -5,6 +5,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  height: 100%;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -27,6 +31,9 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    --vh: 100%;
+
 
     /* Futbol11 Colors */
     --futbol-gold: 48 56% 70%;
@@ -73,7 +80,7 @@
 
 @layer components {
   .container-futbol {
-    @apply max-w-7xl mx-auto px-4;
+    @apply max-w-6xl mx-auto px-4;
   }
 
   .spanFutbol {
@@ -106,6 +113,12 @@
 
   .social-icons a {
     @apply hover:text-[hsl(var(--futbol-gold))] transition-colors;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --vh: 100vh; /* iOS workaround */
   }
 }
 
