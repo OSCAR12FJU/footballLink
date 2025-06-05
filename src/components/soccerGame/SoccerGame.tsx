@@ -23,10 +23,6 @@ export default function SoccerGame(){
     const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
 
 
-
-
-    console.log("text input",guessInput)
-
     const getRandomGameData = () =>{
       const randomIndex = Math.floor(Math.random() * AdvPlayers.length);
       return AdvPlayers[randomIndex]
@@ -157,7 +153,7 @@ export default function SoccerGame(){
       <div className="container-futbol">
         {/* Esto es la opción principla que se va a mostrar por que esl estado es falso, que esto indica que toda via no se dió comienzo al juego. */}
         {!gameStarted ? (
-            <div className="max-w-3xl mx-auto bg-[#081828] border border-gray-800 rounded-md p-4 md:p-8">
+            <div className="max-w-3xl mx-auto bg-[#081828] border border-gray-800 rounded-md p-4 md:p-8 mt-8">
               <h1 className="gameTitlee">
                 <span className="spanFutbol">FUTBOL</span>
                 <span className="span11">11</span> LINK
