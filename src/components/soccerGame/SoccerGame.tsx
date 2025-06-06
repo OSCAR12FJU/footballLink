@@ -54,6 +54,10 @@ export default function SoccerGame(){
           setFilteredOptions([]);
           return
         }
+        //centrar cuando se escriba
+        if (value){
+         e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
 
         const filtered = footballPlayers
         .filter((player) => player.name.toLowerCase().includes(value.toLowerCase()))
