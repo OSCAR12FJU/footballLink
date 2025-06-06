@@ -1,6 +1,7 @@
-import React, { useState } from "react"
+import React, {  useState } from "react"
 import { AdvPlayers, footballPlayers, type GameData } from "../../data/dataPlayer";
 import playerIncong from "../../../public/file/player_incong.png"
+import flyer_welcome from "../../../public/file/flyer_welcome.png"
 // import { mockGameData } from "../../data/dataPlayer";
 
 export default function SoccerGame(){
@@ -17,11 +18,9 @@ export default function SoccerGame(){
     const [gameResult, setGameResult] = useState<"correct" | "incorrect" | null>(null);
     const [gameEnded, setGameEnded] = useState(false);
     const [showIncorrectMessage, setShowIncorrectMessage] = useState(false);
+    const [playerSelect, setPlayerSelect] = useState("");
 
-    //Logica para el input
-    // const [inputValue, setInputValue] = useState("");
     const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
-
 
     const getRandomGameData = () =>{
       const randomIndex = Math.floor(Math.random() * AdvPlayers.length);
@@ -50,7 +49,6 @@ export default function SoccerGame(){
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
       const value = e.target.value;
       setGuessInput(value);
-
       
         if(value === ""){
           setFilteredOptions([]);
@@ -62,7 +60,6 @@ export default function SoccerGame(){
         .map((player) => player.name);
         
         setFilteredOptions(filtered)
-
     }
 
 
@@ -72,18 +69,9 @@ export default function SoccerGame(){
 
         const newIndex = visibleTeammatesCount;
         setVisibleTeammatesCount(prev => prev + 1 );
-        // if(visibleTeammatesCount < mockGameData.teammates.length){
-        //     setVisibleTeammatesCount(visibleTeammatesCount + 1)
-        // }
-        setFlippedCards(prev => [...prev,newIndex]);
-        //Condiciónal para cuando ya las opciónes de cards mostradas sea la misma de las opciónes el juego se corte.
-        // if(newCount === mockGameData.teammates.length){
-        //   setGameEnded(true);
-        // }
 
-      //   if (visibleTeammatesCount + 1 === mockGameData.teammates.length) {
-      //     setGameEnded(true);
-      // }
+        setFlippedCards(prev => [...prev,newIndex]);
+
         if(visibleTeammatesCount === mockGameData.teammates.length - 1){
             setGameResult("incorrect");
             setGameEnded(true);
@@ -110,6 +98,7 @@ export default function SoccerGame(){
             //Si no coincide enviamos eso
             setGameResult("incorrect");
             setShowIncorrectMessage(true);
+            setPlayerSelect(guessInput)
             //Aca a dentro enviamos otra condición viendo de que si el estado de la cantidad de opciónes mostradas toda via no se completa seguimos con el flujo.
             if(gameEnded){
                 setVisibleTeammatesCount(mockGameData.teammates.length);
@@ -126,6 +115,7 @@ export default function SoccerGame(){
     const isFlipped = gameResult === "correct" || gameEnded;
 
     let lastNameMistery = "";
+
 
     if (mockGameData?.mysteryPlayer?.name) {
       const nameMistery = mockGameData.mysteryPlayer.name
@@ -153,30 +143,31 @@ export default function SoccerGame(){
       <div className="container-futbol">
         {/* Esto es la opción principla que se va a mostrar por que esl estado es falso, que esto indica que toda via no se dió comienzo al juego. */}
         {!gameStarted ? (
-            <div className="max-w-3xl mx-auto bg-[#081828] border border-gray-800 rounded-md p-4 md:p-8 mt-8">
+            <div className="max-w-3xl mx-auto bg-[#081828] border-2 border-[#F2B705] rounded-md p-4 md:p-8 mt-8 ">
               <h1 className="gameTitlee">
-                <span className="spanFutbol">FUTBOL</span>
+                <span className="font-bold text-[#F2B705]">FUTBOL</span>
                 <span className="span11">11</span> LINK
               </h1>
 
-              <div className="gameInfoInside">
+              <div className="grid grid-cols-1 md:grid-cols-2 justify-center gap-x-6 gap-y-4">
                 <div className="">
-                  <p className="gameInfoText">
-                    Futbol Link challenges you to guess the mysterious player who has played with all five teammates shown.
+                  <img src={flyer_welcome} alt="start game" className="w-full h-full object-contain rounded-md"/>
+
+                </div>
+                <div className="">
+                 <p className="gameInfoText">
+                    ⚽ <strong>¡Futbol Link te reta!</strong> Adivina quién es el jugador misterioso que ha compartido equipo con los cinco compañeros que se mostrarán.
                     <br /><br />
-                    The game starts by revealing one player, and you can guess or skip to see more teammates. If your guess is correct, you win!
+                    ✅ ¡Si adivinas correctamente en cualquier momento, ganas!
                     <br /><br />
-                    Once all five teammates are revealed, you'll have one final chance to guess.
-                    <br /><br />
-                    
-                    {/* al presionar este boton, vamos activar la función para que este nos cambie el estado y este bloque de codigo no se muestre */}
+                    🕹️ Tenes 5 oportunidades para adivinar el jugador oculto.
+                  </p>
                     <button
-                        className="searchButton startGame"
+                        className="font-semibold px-3 py-2 rounded-md text-black bg-[#F2B705] mt-4"
                         onClick={handleStartGame}
                     >
-                        Start Game
+                        Comenzar
                     </button>
-                  </p>
                 </div>
               </div>
 
@@ -290,16 +281,16 @@ export default function SoccerGame(){
               </div>
              
              {/* Aca hacemos otra verificación por bloques, en la cual el estado de este se guia según cada ejecutción por el buscador que se hace,de losnombre si no es correcto se muestran estas respuestas. */}
-              {gameResult === "correct" ? (
+               {gameResult === "correct" ? (
                 //Esta opción ya is la pega de una ya va colocar el banner verde pro encima y no va a mostrar el buscador.
                 <div className="bg-green-900/30 border border-green-700 p-4 rounded-md mb-4">
-                  <p className="text-green-400 text-center">Correct! The mystery player is {mockGameData?.mysteryPlayer.name}.</p>
+                  <p className="text-green-400 text-center">Correcto! El jugador misterioso es {mockGameData?.mysteryPlayer.name}.</p>
                   <div className="flex justify-center mt-4">
                     <button
-                      className="searchButton startGame"
+                      className="bg-[#F2B705] text-black rounded-md border-2 border-[#F2B705] font-semibold text-base p-2"
                       onClick={handleStartGame}
                     >
-                      Play Again
+                      Volver a Jugar
                     </button>
                   </div>
                 </div>
@@ -308,15 +299,14 @@ export default function SoccerGame(){
                 //Aparte del tecto este va a mostrar on mini banner rojo y no va a mostar el buscador ya.
                 <div className="bg-red-900/30 border border-red-700 p-4 rounded-md mb-4">
                   <p className="text-red-400 text-center">
-                    Incorrect! The mystery player was {mockGameData?.mysteryPlayer.name}.
+                    Incorrecto! El jugador misterioso es {mockGameData?.mysteryPlayer.name}.
                   </p>
                   <div className="flex justify-center mt-4">
                     <button
-                      className="searchButton startGame"
-                      //cuando ya se queda sin opciones se puede reiniciar el juego. Ejecutando la misma función que usamos para arrancar el juego.
+                      className="bg-[#F2B705] text-black rounded-md border-2 border-[#F2B705] font-semibold text-base p-2"
                       onClick={handleStartGame}
                     >
-                      Play Again
+                      Volver a Jugar
                     </button>
                   </div>
                 </div>
@@ -371,6 +361,7 @@ export default function SoccerGame(){
                       </ul>
                     )}
 
+
                     {/* <button 
                     type="button" 
                     className="absolute inset-y-0 end-0 flex items-center pe-3"
@@ -389,7 +380,7 @@ export default function SoccerGame(){
                     // </button>
                     <button 
                     className="inline-flex items-center py-2.5 px-3 text-base font-medium rounded-md bg-[#F2B705] text-black border-2 border-[#F2B705]"
-                     onClick={handleSkip}>
+                     onClick={handleGuess}>
                         {/* <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  className=""><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6" /></svg> */}
                         <svg  xmlns="http://www.w3.org/2000/svg"viewBox="0 0 24 24"  fill="currentColor"  className="w-6 h-6"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5v14a1 1 0 0 0 1.504 .864l12 -7a1 1 0 0 0 0 -1.728l-12 -7a1 1 0 0 0 -1.504 .864z" /><path d="M20 4a1 1 0 0 1 .993 .883l.007 .117v14a1 1 0 0 1 -1.993 .117l-.007 -.117v-14a1 1 0 0 1 1 -1z" /></svg>
                     </button>
@@ -400,7 +391,7 @@ export default function SoccerGame(){
               {/* esta es la verifiación de si la respues es incorrecta pero toda via quedan opciónes pendientes. */}
                 {showIncorrectMessage && gameResult === "incorrect" && !gameEnded &&(
                 <p className={`text-red-400 text-center mt-4 ${guessInput === "" ? "hidden": "block"}`}>
-                  Incorrecto! El jugador no es {guessInput == "" ? "ese" : guessInput }.
+                  Incorrecto! El jugador no es {playerSelect == "" ? "ese" : playerSelect }.
                 </p>
               )}
 
