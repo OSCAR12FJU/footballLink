@@ -99,6 +99,7 @@ export default function SoccerGame(){
             setGameResult("incorrect");
             setShowIncorrectMessage(true);
             setPlayerSelect(guessInput)
+            setGuessInput("")
             //Aca a dentro enviamos otra condición viendo de que si el estado de la cantidad de opciónes mostradas toda via no se completa seguimos con el flujo.
             if(gameEnded){
                 setVisibleTeammatesCount(mockGameData.teammates.length);
@@ -390,7 +391,7 @@ export default function SoccerGame(){
               )}
               {/* esta es la verifiación de si la respues es incorrecta pero toda via quedan opciónes pendientes. */}
                 {showIncorrectMessage && gameResult === "incorrect" && !gameEnded &&(
-                <p className={`text-red-400 text-center mt-4 ${guessInput === "" ? "hidden": "block"}`}>
+                <p className={`text-red-400 text-center mt-4 `}>
                   Incorrecto! El jugador no es {playerSelect == "" ? "ese" : playerSelect }.
                 </p>
               )}
