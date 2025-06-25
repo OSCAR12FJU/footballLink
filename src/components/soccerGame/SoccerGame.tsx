@@ -1,7 +1,11 @@
-import React, {  useState } from "react"
-import { AdvPlayers, footballPlayers, type GameData } from "../../data/dataPlayer";
+import React, {useEffect, useState } from "react"
+import {AdvPlayers, footballPlayers } from "../../data/dataPlayer";
 import playerIncong from "../../../public/file/player_incong.png"
 import flyer_welcome from "../../../public/file/flyer_welcome.png"
+import { BannerRunGame } from "../ui/BannerRunGame";
+import { generateRound, type GameRound } from "../../utils/gameService";
+import { SearchBarPayer } from "../ui/SearchBarPlayer";
+import { ModalStatistics } from "../ui/ModalStatistics";
 // import { mockGameData } from "../../data/dataPlayer";
 
 export default function SoccerGame(){
@@ -11,25 +15,79 @@ export default function SoccerGame(){
     const [gameStarted, setGameStarted] = useState(false);
     //Es el estado que maneja la condición y refrencia de las opciónes visibles de jugadores.
     const [visibleTeammatesCount, setVisibleTeammatesCount] = useState(1);
-    
-    const [mockGameData, setMockGameData] = useState<GameData>();
-
+    const [mockGameData, setMockGameData] = useState<GameRound>();
     const [guessInput, setGuessInput] = useState("");
     const [gameResult, setGameResult] = useState<"correct" | "incorrect" | null>(null);
     const [gameEnded, setGameEnded] = useState(false);
     const [showIncorrectMessage, setShowIncorrectMessage] = useState(false);
+    const [isOpenStatistics, setIsOpenStatistics] = useState(false);
     const [playerSelect, setPlayerSelect] = useState("");
-
+    // const [currentRound, setCurrentRound] = useState<number>(1);
+    const [roundsCompleted, setRoundCompleted] = useState<number>(0);
     const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
+    
+    //Filtrar jugadores repetidos
+    const [usedMysteryPlayers, setUsedMysteryPlayers] = useState<string[]>([]);
+    
+    //Estados para el conteó de las rachas
+    const [successStreak, setSuccessStreak] = useState(0); // racha actual
+    const [maxSuccessStreak, setMaxSuccessStreak] = useState(0); // racha máxima
+    
+    //Manejo de renderizado
+    const [hasLoadedStreak, setHasLoadedStreak] = useState(false);
+    //Manejo de renderizado de Nivel
+    const [userLevel, setUserLevel] = useState<number>(1);
+    const [hasLoadedLevel, setHasLoadedLevel] = useState(false);
 
-    const getRandomGameData = () =>{
-      const randomIndex = Math.floor(Math.random() * AdvPlayers.length);
-      return AdvPlayers[randomIndex]
+    //Vamos a crear configuración de localstorage
+    useEffect(() =>{
+      const stored = localStorage.getItem("mySuccessStreak");
+      const parsed = Number(stored)
+      if(!isNaN(parsed)){
+        setMaxSuccessStreak(Number(parsed))
+      }
+      setHasLoadedStreak(true);
+    },[]);
+
+    useEffect(() =>{
+      if(hasLoadedStreak){
+        localStorage.setItem("mySuccessStreak", maxSuccessStreak.toString());
+      }
+    }, [maxSuccessStreak, hasLoadedStreak]);
+
+    //Vamos a crear configuración de localstorage para el nivel
+    useEffect(() =>{
+      const storedLevel = localStorage.getItem("myUserLevel");
+      const parsedLevel = Number(storedLevel)
+      if(!isNaN(parsedLevel)){
+        setUserLevel(Number(parsedLevel))
+      }
+      setHasLoadedLevel(true);
+    },[]);
+
+    useEffect(() =>{
+      if(hasLoadedLevel){
+        localStorage.setItem("myUserLevel", userLevel.toString());
+      }
+    }, [userLevel, hasLoadedLevel]);
+
+    const MAX_ROUNDS_PER_LEVEL = 2
+    //Función que arranca el jeugo y me genera el personaje aelejir y las opciónes
+    // const getRandomGameData = () =>{
+    //   const randomIndex = Math.floor(Math.random() * AdvPlayers.length);
+    //   return AdvPlayers[randomIndex]
+    // }
+    //Destructuacion del tipo de jugador
+    // console.log("ronda:",currentRound);
+
+    if(usedMysteryPlayers.length >= AdvPlayers.length){
+      setUsedMysteryPlayers([]);
     }
- 
+   
     const handleStartGame = () =>{      
-        const randomPlayer = getRandomGameData();
-        setMockGameData(randomPlayer);
+        const round = generateRound(userLevel, usedMysteryPlayers);
+        setUsedMysteryPlayers(prev => [...prev, round.mysteryPlayer.name])
+        setMockGameData(round);
         setGameStarted(true);
         setVisibleTeammatesCount(1);
         setGuessInput("");
@@ -38,13 +96,6 @@ export default function SoccerGame(){
 
         setFlippedCards([0]);
     }
-
-    //Función para dar reversa la card
-    // const handleReveal = (index: number) => {
-    //   if (!flippedCards.includes(index)) {
-    //     setFlippedCards([...flippedCards, index]);
-    //   }
-    // };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
       const value = e.target.value;
@@ -84,6 +135,10 @@ export default function SoccerGame(){
         }
     };
 
+    const handleClick = () =>{
+      setIsOpenStatistics(prev => !prev)
+    }
+
     //Comprobación de contenido del buscador (input)
     const handleGuess = () =>{
         //En estas 2 lineas tomamos lo nombre de los jugadores, uno desde el bsucador y otro desde la data guardada en la que bsucamos adaptar el texto para que sea tranquilamente legible y guardamos en variable separada
@@ -95,15 +150,35 @@ export default function SoccerGame(){
         //Comparamos los 2 texto por separado que están guardados por  variable.
         if(normalizedGuess === normalizedAnswer){
             //Si coincide enviamos al estado la opción
+            const newRoundCompleted = roundsCompleted + 1;
+            const newStreak = successStreak + 1;
+
             setGameResult("correct");
             setFlippedCards(Array.from({length: visibleTeammatesCount}, (_, i) => i));
             setShowIncorrectMessage(false);
+            ///////////////////////////////
+            setRoundCompleted(newRoundCompleted);
+            setSuccessStreak(newStreak);
+            setMaxSuccessStreak(max => newStreak > max ? newStreak : max);
+
+
+            if(roundsCompleted + 1 >= MAX_ROUNDS_PER_LEVEL){
+              setUserLevel(prev => {
+                const newLevel = prev + 1;
+                alert(`¡Nivel ${newLevel} desbloqueado!`)
+                return newLevel
+              });
+              setRoundCompleted(0);
+            }
+            // setCurrentRound(prev => prev + 1);
         }else{
             //Si no coincide enviamos eso
             setGameResult("incorrect");
             setShowIncorrectMessage(true);
             setPlayerSelect(guessInput)
             setGuessInput("")
+
+            setSuccessStreak(0);
             //Aca a dentro enviamos otra condición viendo de que si el estado de la cantidad de opciónes mostradas toda via no se completa seguimos con el flujo.
             if(gameEnded){
                 setVisibleTeammatesCount(mockGameData.teammates.length);
@@ -144,48 +219,37 @@ export default function SoccerGame(){
 
 
     return(
+    
      <div className="pb-4">
       <div className="container-futbol">
         {/* Esto es la opción principla que se va a mostrar por que esl estado es falso, que esto indica que toda via no se dió comienzo al juego. */}
         {!gameStarted ? (
-            <div className="max-w-3xl mx-auto bg-[#081828] border-2 border-[#F2B705] rounded-md p-4 md:p-8 mt-8 ">
-              <h1 className="gameTitlee">
-                <span className="font-bold text-[#F2B705]">FUTBOL</span>
-                <span className="span11">11</span> LINK
-              </h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 justify-center gap-x-6 gap-y-4">
-                <div className="">
-                  <img src={flyer_welcome} alt="start game" className="w-full h-full object-contain rounded-md"/>
-
-                </div>
-                <div className="">
-                 <p className="gameInfoText">
-                    ⚽ <strong>¡Futbol Link te reta!</strong> Adivina quién es el jugador misterioso que ha compartido equipo con los cinco compañeros que se mostrarán.
-                    <br /><br />
-                    ✅ ¡Si adivinas correctamente en cualquier momento, ganas!
-                    <br /><br />
-                    🕹️ Tenes 5 oportunidades para adivinar el jugador oculto.
-                  </p>
-                    <button
-                        className="font-semibold px-3 py-2 rounded-md text-black bg-[#F2B705] mt-4"
-                        onClick={handleStartGame}
-                    >
-                        Comenzar
-                    </button>
-                </div>
-              </div>
-
-            </div>
+          <BannerRunGame flyer_welcome={flyer_welcome} handleStartGame={handleStartGame}/>
 
         ) : (
-            <div className="max-w-2xl md:max-w-4xl mx-auto p-4 md:p-8">
-               {/* <h1 className="gameTitlee">
-                <span className="spanFutbol">FUTBOL</span>
-                <span className="span11">11</span> LINK
-              </h1> */}
+    <div className="max-w-2xl md:max-w-4xl mx-auto p-4 md:p-8 ">
+
     <div className="mb-8">
-      <div className="flex flex-col justify-center items-center py-4 ">
+      <div className="flex flex-col justify-center items-center py-4 relative">
+      
+      {/* Menu de estadisticas */}
+     <div className="absolute top-0 right-0 cursor-pointer" onClick={handleClick}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="w-8 h-8 text-white"
+      >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+        <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+        <path d="M9 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+        <path d="M15 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+        <path d="M4 20h14" />
+      </svg>
+    </div>
+
           <div className="w-20 h-20 md:w-[7rem] md:h-[7rem] lg:w-32 lg:h-32 [perspective:600px]">
               <div className={`relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d] ${
                   isFlipped ? '[transform:rotateY(180deg)]' : ''
@@ -270,15 +334,7 @@ export default function SoccerGame(){
                           {/* /////////////// */}
                         </div>
                       </div>
-                     
-                     {/* <div className="aspect-square overflow-hidden rounded-md bg-[#0F344B] border-[#0DD0F7] border mb-2 w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32">
-
-                      <img
-                       src={player.imageUrl}
-                       alt={lastName}
-                       className="h-full w-full object-cover" />  
-                     </div>
-                     <h3 className="text-white text-center text-base font-medium">{lastName}</h3> */}
+                    
                     </div>
                 )})}
 
@@ -292,10 +348,10 @@ export default function SoccerGame(){
                   <p className="text-green-400 text-center">Correcto! El jugador misterioso es {mockGameData?.mysteryPlayer.name}.</p>
                   <div className="flex justify-center mt-4">
                     <button
-                      className="bg-[#F2B705] text-black rounded-md border-2 border-[#F2B705] font-semibold text-base p-2"
+                      className="bg-[#F2B705] text-black rounded-md border-2 border-[#F2B705] font-medium text-base p-2"
                       onClick={handleStartGame}
                     >
-                      Volver a Jugar
+                      Seguir Jugando
                     </button>
                   </div>
                 </div>
@@ -318,57 +374,17 @@ export default function SoccerGame(){
               ) : (
                 //Si toda via no se queda sin opciónes y no adivina sigue la opción para colocar las opciónes
                 <div className="flex items-center max-w-lg mx-auto gap-2">
-                <div className="relative w-full transition-all duration-500">
-                    <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                     <svg  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  className="w-6 h-6 text-gray-500  hover:text-gray-900 "><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7l4.76 3.45l-1.76 5.55h-6l-1.76 -5.55z" /><path d="M12 7v-4m3 13l2.5 3m-.74 -8.55l3.74 -1.45m-11.44 7.05l-2.56 2.95m.74 -8.55l-3.74 -1.45" /></svg>
-                    </div>
-                    <input 
-                    type="text" 
-                    value={guessInput}
-                    onChange={(e) => handleChange(e)}
-                    onTouchStart={(e) => {
-                    e.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });}}
-                    onKeyDown={(e) =>{
-                      if(e.key === "Enter") handleGuess();
-                    }}
-                    placeholder="Escribi el nombre del jugador..."
-                    className="bg-[#babecf] border-2 border-white text-[#010b13] text-base rounded-md  block w-full ps-10 p-2.5 placeholder:text-base placeholder:text-gray-500 focus:outline-none" 
-                     required />
-                    {filteredOptions.length >0 && (
-                       <ul className="absolute mt-1 w-full bg-[#babecf] border-2 text-black border-white rounded-md shadow-md max-h-48 overflow-y-auto z-10">
-                        {filteredOptions.map((option, index) => (
-                          <li
-                            key={index}
-                            onClick={() => handleOptionClick(option)}
-                            className="px-4 py-2 text-base hover:bg-gray-100 cursor-pointer border-b border-white"
-                          >
-                            {option}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-
-                    {/* <button 
-                    type="button" 
-                    className="absolute inset-y-0 end-0 flex items-center pe-3"
-                    onClick={handleGuess}>
- 
-                    </button> */}
-                </div>
+                <SearchBarPayer
+                 handleChange={handleChange}
+                 handleOptionClick={handleOptionClick}
+                 filteredOptions={filteredOptions}
+                 handleGuess={handleGuess}
+                 guessInput={guessInput}/>
 
                   {!gameEnded && (
-                    // <button
-                    //   className="px-4 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700"
-                    //   onClick={handleSkip}
-                      
-                    // >
-                    //   Skip
-                    // </button>
                     <button 
                     className="inline-flex items-center py-2.5 px-3 text-base font-medium rounded-md bg-[#F2B705] text-black border-2 border-[#F2B705]"
                      onClick={handleGuess}>
-                        {/* <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  className=""><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6" /></svg> */}
                         <svg  xmlns="http://www.w3.org/2000/svg"viewBox="0 0 24 24"  fill="currentColor"  className="w-6 h-6"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 5v14a1 1 0 0 0 1.504 .864l12 -7a1 1 0 0 0 0 -1.728l-12 -7a1 1 0 0 0 -1.504 .864z" /><path d="M20 4a1 1 0 0 1 .993 .883l.007 .117v14a1 1 0 0 1 -1.993 .117l-.007 -.117v-14a1 1 0 0 1 1 -1z" /></svg>
                     </button>
                   )}
@@ -387,6 +403,13 @@ export default function SoccerGame(){
         )}
 
       </div>
+      <ModalStatistics 
+      handleClick={handleClick}
+      userLevel={userLevel} 
+      maxSuccessStreack={maxSuccessStreak} 
+      successStreak= {successStreak}
+      isOpenStatistics = {isOpenStatistics}
+      />
      </div>
     )
 }
