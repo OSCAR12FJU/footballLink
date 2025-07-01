@@ -127,7 +127,7 @@ export default function SoccerGame(){
 
         setFlippedCards(prev => [...prev,newIndex]);
 
-        if(visibleTeammatesCount === mockGameData.teammates.length - 1){
+    if(mockGameData && visibleTeammatesCount === mockGameData.teammates.length - 1){
             setGameResult("incorrect");
             setGameEnded(true);
             setVisibleTeammatesCount(mockGameData.teammates.length);
