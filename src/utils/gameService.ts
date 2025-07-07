@@ -1,6 +1,5 @@
 import {type FootballPlayer, type GameData } from "../data/dataPlayer"
 
-
 export interface GameRound {
     mysteryPlayer: FootballPlayer;
     teammates: FootballPlayer[];

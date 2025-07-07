@@ -1,262 +1,179 @@
-import React, {useEffect, useState } from "react"
-// import {AdvPlayers, footballPlayers } from "../../data/dataPlayer";
-import playerIncong from "../../../public/file/player_incong.png"
-import flyer_welcome from "../../../public/file/flyer_welcome.png"
+import React, { useEffect, useState } from "react";
+import playerIncong from "../../../public/file/player_incong.png";
+import flyer_welcome from "../../../public/file/flyer_welcome.png";
 import { BannerRunGame } from "../ui/BannerRunGame";
 import { generateRound, type GameRound } from "../../utils/gameService";
 import { SearchBarPayer } from "../ui/SearchBarPlayer";
 import { ModalStatistics } from "../ui/ModalStatistics";
-import { createAdvPlayers, fetchAllPlayers, playerNames, type GameData } from "../../data/dataPlayer";
-// import { mockGameData } from "../../data/dataPlayer";
+// import { FootballService, type GameData } from "../../data/footballService";
+import { FootballService, type GameData } from "../../data/dataPlayer";
 
-export default function SoccerGame(){
-
+export default function SoccerGame() {
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [visibleTeammatesCount, setVisibleTeammatesCount] = useState(1);
+  const [mockGameData, setMockGameData] = useState<GameRound>();
+  const [guessInput, setGuessInput] = useState("");
+  const [gameResult, setGameResult] = useState<"correct" | "incorrect" | null>(null);
+  const [gameEnded, setGameEnded] = useState(false);
+  const [showIncorrectMessage, setShowIncorrectMessage] = useState(false);
+  const [isOpenStatistics, setIsOpenStatistics] = useState(false);
+  const [playerSelect, setPlayerSelect] = useState("");
+  const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
+  const [games, setGames] = useState<GameData[]>([]);
+  const [usedMysteryPlayers, setUsedMysteryPlayers] = useState<string[]>([]);
+  const [successStreak, setSuccessStreak] = useState(0);
+  const [maxSuccessStreak, setMaxSuccessStreak] = useState(0);
+  const [hasLoadedStreak, setHasLoadedStreak] = useState(false);
+  const [userLevel, setUserLevel] = useState<number>(1);
 
-    const [gameStarted, setGameStarted] = useState(false);
-    //Es el estado que maneja la condición y refrencia de las opciónes visibles de jugadores.
-    const [visibleTeammatesCount, setVisibleTeammatesCount] = useState(1);
-    const [mockGameData, setMockGameData] = useState<GameRound>();
-    const [guessInput, setGuessInput] = useState("");
-    const [gameResult, setGameResult] = useState<"correct" | "incorrect" | null>(null);
-    const [gameEnded, setGameEnded] = useState(false);
-    const [showIncorrectMessage, setShowIncorrectMessage] = useState(false);
-    const [isOpenStatistics, setIsOpenStatistics] = useState(false);
-    const [playerSelect, setPlayerSelect] = useState("");
-    // const [currentRound, setCurrentRound] = useState<number>(1);
-    // const [roundsCompleted, setRoundCompleted] = useState<number>(0);
-    const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
+  const service = FootballService.getInstance();
 
-    //Store de jugadores
+  useEffect(() => {
+    const stored = localStorage.getItem("mySuccessStreak");
+    const parsed = Number(stored);
+    if (!isNaN(parsed)) setMaxSuccessStreak(parsed);
+    setHasLoadedStreak(true);
+  }, []);
 
-    // const [players, setPlayers] = useState<FootballPlayer[]>([]);
-    const [games, setGames] = useState<GameData[]>([])    
-    //Filtrar jugadores repetidos
-    const [usedMysteryPlayers, setUsedMysteryPlayers] = useState<string[]>([]);
-    
-    //Estados para el conteó de las rachas
-    const [successStreak, setSuccessStreak] = useState(0); // racha actual
-    const [maxSuccessStreak, setMaxSuccessStreak] = useState(0); // racha máxima
-    
-    //Manejo de renderizado
-    const [hasLoadedStreak, setHasLoadedStreak] = useState(false);
-    //Manejo de renderizado de Nivel
-    const [userLevel, setUserLevel] = useState<number>(1);
-    // const [hasLoadedLevel, setHasLoadedLevel] = useState(false);
+  useEffect(() => {
+    if (hasLoadedStreak) {
+      localStorage.setItem("mySuccessStreak", maxSuccessStreak.toString());
+    }
+  }, [maxSuccessStreak, hasLoadedStreak]);
 
-    //Vamos a crear configuración de localstorage
-    useEffect(() =>{
-      const stored = localStorage.getItem("mySuccessStreak");
-      const parsed = Number(stored)
-      if(!isNaN(parsed)){
-        setMaxSuccessStreak(Number(parsed))
-      }
-      setHasLoadedStreak(true);
-    },[]);
+  useEffect(() => {
+    const storedLevel = localStorage.getItem("myUserLevel");
+    const parsedLevel = Number(storedLevel);
+    if (!isNaN(parsedLevel)) setUserLevel(parsedLevel);
+  }, []);
 
-    useEffect(() =>{
-      if(hasLoadedStreak){
-        localStorage.setItem("mySuccessStreak", maxSuccessStreak.toString());
-      }
-    }, [maxSuccessStreak, hasLoadedStreak]);
-
-    //Vamos a crear configuración de localstorage para el nivel
-    useEffect(() =>{
-      const storedLevel = localStorage.getItem("myUserLevel");
-      const parsedLevel = Number(storedLevel)
-      if(!isNaN(parsedLevel)){
-        setUserLevel(Number(parsedLevel))
-      }
-      // setHasLoadedLevel(true);
-    },[]);
-
-    // useEffect(() =>{
-    //   if(hasLoadedLevel){
-    //     localStorage.setItem("myUserLevel", userLevel.toString());
-    //   }
-    // }, [userLevel, hasLoadedLevel]);
-
-    // const MAX_ROUNDS_PER_LEVEL = 2
-    //Función que arranca el jeugo y me genera el personaje aelejir y las opciónes
-    // const getRandomGameData = () =>{
-    //   const randomIndex = Math.floor(Math.random() * AdvPlayers.length);
-    //   return AdvPlayers[randomIndex]
-    // }
-    //Destructuacion del tipo de jugador
-    // console.log("ronda:",currentRound);
-
-    useEffect(() =>{
-      fetchAllPlayers().then(allPlayers =>{
-        setGames(createAdvPlayers(allPlayers));
-      })
-    },[]);
-
-    // if(usedMysteryPlayers.length >= AdvPlayers.length){
-    //   setUsedMysteryPlayers([]);
-    // }
-   
-      const handleStartGame = () => {      
-      if (games.length === 0) return; // por si todavía no se cargaron los juegos
-
-      const allMysteryNames = games.map(game => game.mysteryPlayer.name);
-
-      // Si ya usamos todos los jugadores, reiniciamos
-      let excluded = usedMysteryPlayers;
-      if (usedMysteryPlayers.length >= allMysteryNames.length) {
-        excluded = [];
-        setUsedMysteryPlayers([]);
-      }
-
-      let round;
+  useEffect(() => {
+    service.fetchAllPlayersCached().then(allPlayers => {
+      // console.log("jugadores desde el soccerGame",allPlayers)
       try {
-        round = generateRound(excluded, games);
+        const data = service.createGameData(allPlayers);
+        setGames(data);
       } catch (error) {
-        console.error("Error generando ronda:", error);
-        return;
+        console.error("Error creando game data:", error);
       }
+    });
+  }, []);
 
-      setUsedMysteryPlayers(prev => [...prev, round.mysteryPlayer.name]);
-      setMockGameData(round);
-      setGameStarted(true);
-      setVisibleTeammatesCount(1);
-      setGuessInput("");
-      setGameResult(null);
-      setGameEnded(false);
+  const handleStartGame = () => {
+    if (games.length === 0) return;
 
-      setFlippedCards([0]);
+    const allMysteryNames = games.map(game => game.mysteryPlayer.name);
+    let excluded = usedMysteryPlayers;
+
+    if (usedMysteryPlayers.length >= allMysteryNames.length) {
+      excluded = [];
+      setUsedMysteryPlayers([]);
     }
 
-
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
-      const value = e.target.value;
-      setGuessInput(value);
-      
-        if(value === ""){
-          setFilteredOptions([]);
-          return
-        }
-        //centrar cuando se escriba
-        if (value){
-         e.target.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-
-        const normalize = (str: string) =>
-          str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-        const filtered = playerNames
-          .filter((player) => normalize(player).includes(normalize(value)))
-          .map((player) => player);
-
-        setFilteredOptions(filtered);
-        
+    let round;
+    try {
+      round = generateRound(excluded, games);
+    } catch (error) {
+      console.error("Error generando ronda:", error);
+      return;
     }
 
+    setUsedMysteryPlayers(prev => [...prev, round.mysteryPlayer.name]);
+    setMockGameData(round);
+    setGameStarted(true);
+    setVisibleTeammatesCount(1);
+    setGuessInput("");
+    setGameResult(null);
+    setGameEnded(false);
+    setFlippedCards([0]);
+  };
 
-    const handleSkip = () =>{
-        //Hago la verificación para que lo visibles siempre sean menores que el 
-        if (!mockGameData) return ; // o un loading, fallback, etc.
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setGuessInput(value);
 
-        const newIndex = visibleTeammatesCount;
-        setVisibleTeammatesCount(prev => prev + 1 );
-
-        setFlippedCards(prev => [...prev,newIndex]);
-
-    if(mockGameData && visibleTeammatesCount === mockGameData.teammates.length - 1){
-            setGameResult("incorrect");
-            setGameEnded(true);
-            setVisibleTeammatesCount(mockGameData.teammates.length);
-            setFlippedCards(Array.from({length: mockGameData.teammates.length}, (_,i) => i));
-        }
-    };
-
-    const handleClick = () =>{
-      setIsOpenStatistics(prev => !prev)
-    }
-
-    //Comprobación de contenido del buscador (input)
-    const handleGuess = () =>{
-        //En estas 2 lineas tomamos lo nombre de los jugadores, uno desde el bsucador y otro desde la data guardada en la que bsucamos adaptar el texto para que sea tranquilamente legible y guardamos en variable separada
-        if (!mockGameData) return null; // o un loading, fallback, etc.
-        //Descencriptaciòn de texto
-        const normalize = (str: string) =>
-          str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-        const normalizedGuess = normalize(guessInput.trim());
-        const normalizedAnswer = normalize(mockGameData.mysteryPlayer.name);
-
-        //Comparamos los 2 texto por separado que están guardados por  variable.
-        if(normalizedGuess === normalizedAnswer){
-            //Si coincide enviamos al estado la opción
-            // const newRoundCompleted = roundsCompleted + 1;
-            const newStreak = successStreak + 1;
-
-            setGameResult("correct");
-            setFlippedCards(Array.from({length: visibleTeammatesCount}, (_, i) => i));
-            setShowIncorrectMessage(false);
-            ///////////////////////////////
-            // setRoundCompleted(newRoundCompleted);
-            setSuccessStreak(newStreak);
-            setMaxSuccessStreak(max => newStreak > max ? newStreak : max);
-
-
-            // if(roundsCompleted + 1 >= MAX_ROUNDS_PER_LEVEL){
-            //   setUserLevel(prev => {
-            //     const newLevel = prev + 1;
-            //     alert(`¡Nivel ${newLevel} desbloqueado!`)
-            //     return newLevel
-            //   });
-            //   setRoundCompleted(0);
-            // }
-            // setCurrentRound(prev => prev + 1);
-        }else{
-            //Si no coincide enviamos eso
-            setGameResult("incorrect");
-            setShowIncorrectMessage(true);
-            setPlayerSelect(guessInput)
-            setGuessInput("")
-
-            setSuccessStreak(0);
-            //Aca a dentro enviamos otra condición viendo de que si el estado de la cantidad de opciónes mostradas toda via no se completa seguimos con el flujo.
-            if(gameEnded){
-                setVisibleTeammatesCount(mockGameData.teammates.length);
-
-            }else{
-                //Si toda via el estado de opciónes max alcanzada, ejecutamos la función para que se muestren otras opciónes.
-                handleSkip();
-            }
-        }
-    };
-    //En esta variable guardamos el numero de ociónes de datos completos que queremos que se muestren el cual este se  maneja por el estado que tiene el indice de las opciones pendientes que quedan por mostrar, osea no se muestran todas al mismo tiempo sino una por vez, si toda via no se adivina al jugador.
-    // const visibleTeammates = mockGameData?.teammates.slice(0, visibleTeammatesCount);
-    const visibleTeammates = mockGameData?.teammates || [];
-    const isFlipped = gameResult === "correct" || gameEnded;
-
-
-    let lastNameMistery = "";
-
-
-    if (mockGameData?.mysteryPlayer?.name) {
-      const nameMistery = mockGameData.mysteryPlayer.name
-        .split(" ")
-        .filter(Boolean); // elimina espacios vacíos
-
-      if (nameMistery.length >= 3) {
-        lastNameMistery = `${nameMistery[nameMistery.length - 2]} ${nameMistery[nameMistery.length - 1]}`;
-      } else if (nameMistery.length === 2) {
-        lastNameMistery = nameMistery[1];
-      } else {
-        lastNameMistery = nameMistery[0];
-      }
-    }
-
-    //Función de selección
-    const handleOptionClick= (option:string) =>{
-      setGuessInput(option);
+    if (value === "") {
       setFilteredOptions([]);
-    };
+      return;
+    }
+
+    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const filtered = service["playerNames"].filter(player =>
+      normalize(player).includes(normalize(value))
+    );
+
+    setFilteredOptions(filtered);
+  };
+
+  const handleSkip = () => {
+    if (!mockGameData) return;
+    const newIndex = visibleTeammatesCount;
+    setVisibleTeammatesCount(prev => prev + 1);
+    setFlippedCards(prev => [...prev, newIndex]);
+
+    if (visibleTeammatesCount === mockGameData.teammates.length - 1) {
+      setGameResult("incorrect");
+      setGameEnded(true);
+      setVisibleTeammatesCount(mockGameData.teammates.length);
+      setFlippedCards(Array.from({ length: mockGameData.teammates.length }, (_, i) => i));
+    }
+  };
+
+  const handleGuess = () => {
+    if (!mockGameData) return;
+
+    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const normalizedGuess = normalize(guessInput.trim());
+    const normalizedAnswer = normalize(mockGameData.mysteryPlayer.name);
+
+    if (normalizedGuess === normalizedAnswer) {
+      const newStreak = successStreak + 1;
+      setGameResult("correct");
+      setFlippedCards(Array.from({ length: visibleTeammatesCount }, (_, i) => i));
+      setShowIncorrectMessage(false);
+      setSuccessStreak(newStreak);
+      setMaxSuccessStreak(max => (newStreak > max ? newStreak : max));
+    } else {
+      setGameResult("incorrect");
+      setShowIncorrectMessage(true);
+      setPlayerSelect(guessInput);
+      setGuessInput("");
+      setSuccessStreak(0);
+
+      if (gameEnded) {
+        setVisibleTeammatesCount(mockGameData.teammates.length);
+      } else {
+        handleSkip();
+      }
+    }
+  };
+
+  const handleOptionClick = (option: string) => {
+    setGuessInput(option);
+    setFilteredOptions([]);
+  };
+
+  const handleClick = () => {
+    setIsOpenStatistics(prev => !prev);
+  };
+
+  // const visibleTeammates = mockGameData?.teammates.slice(0, visibleTeammatesCount) || [];
+  const visibleTeammates = mockGameData?.teammates ?? [];
+  const isFlipped = gameResult === "correct" || (gameResult === "incorrect" && gameEnded);
 
 
+  let lastNameMistery = "";
+  if (mockGameData?.mysteryPlayer?.name) {
+    const nameParts = mockGameData.mysteryPlayer.name.split(" ").filter(Boolean);
+    if (nameParts.length >= 3) {
+      lastNameMistery = `${nameParts[nameParts.length - 2]} ${nameParts[nameParts.length - 1]}`;
+    } else if (nameParts.length === 2) {
+      lastNameMistery = nameParts[1];
+    } else {
+      lastNameMistery = nameParts[0];
+    }
+  }
     return(
     
      <div className="pb-4">
